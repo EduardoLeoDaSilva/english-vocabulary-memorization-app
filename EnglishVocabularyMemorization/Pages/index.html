@@ -1,0 +1,332 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flash Cards com Bootstrap</title>
+    <!-- Inclua os arquivos do Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<body>
+    <div class="container mt-5">
+        <div class="row">
+            <!-- Coluna de Lista de Labels Disponíveis -->
+            <div class="col-md-3 mb-3" style="max-height:93vh; overflow:auto;z-index: 1000;"">
+                <div class=" accordion" id="accordionExample2">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapseTwo" aria-expanded="true" aria-controls="collapseOne">
+                            Palavras para revisar
+                        </button>
+                    </h2>
+                    <div id="collapseTwo" class="accordion-collapse collapse show" data-bs-parent="#accordionExample2">
+                        <div class="accordion-body">
+                            <div class=" list-group" id="to-review">
+
+                                <!-- Adicione mais labels conforme necessário -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coluna de Flash Cards -->
+        <div class="col-md-6">
+            <h1 class="text-center mb-4">Flash Cards</h1>
+            <p style="padding-top: 20px;"></p>
+            <div class="card" id="current-card">
+                <div class="card-body" id="current-card-body">
+                    <h5 class="card-title" id="current-card-body-title">Card 2</h5>
+                    <p class="card-text" id="current-card-body-text">Conteúdo do Card 2.</p>
+                </div>
+                <br>
+            </div>
+
+            <div id="sentences">
+
+            </div>
+
+        </div>
+
+        <!-- Coluna de Informações de Revisão -->
+        <div class="col-md-3 mb-3" style="max-height:93vh; overflow:auto; z-index: 1000;">
+
+            <div class="accordion" id="accordionExample">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                            Palavras em revisão
+                        </button>
+                    </h2>
+                    <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+                        <div class="accordion-body">
+                            <div class="list-group" id="in-repetition">
+            
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Inclua os arquivos do Bootstrap (popper.js é necessário para o componente Carousel) -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+</body>
+
+<script>
+    // Função para adicionar novas labels à lista
+    function adicionarLabel(texto, wordId) {
+        var lista = $("#to-review");
+        var novoItem = $("<button>").addClass("list-group-item list-group-item-action").text(texto);
+        novoItem.click(x => openWord(wordId));
+        lista.append(novoItem);
+    }
+
+    function adicionarInformacaoRevisao(palavra, dias, wordId) {
+        var lista = $("#in-repetition");
+        var novoItem = $("<button>").addClass("list-group-item list-group-item-action d-flex justify-content-between align-items-center")
+            .append($("<span>").text(palavra))
+            .append($("<span>").addClass("badge bg-primary").text(dias + " dias"));
+        novoItem.click(x => openWord(wordId));
+        lista.append(novoItem);
+    }
+
+    function nextWord(wordId) {
+        let toReview = JSON.parse(localStorage.getItem('toreview'));
+        let word;
+        if (toReview.findIndex(x => x.id == wordId) != -1) {
+            var wordIndex = toReview.findIndex(x => x.id == wordId);
+            word = toReview[wordIndex];
+            var nextWord = toReview[wordIndex + 1];
+            // toReview.splice(wordIndex, 1);
+            // localStorage.setItem('toreview', JSON.stringify(toReview));
+            openWord(nextWord.wordUpId);
+        } else {
+            let reviewing = JSON.parse(localStorage.getItem('reviewing'));
+
+            if (reviewing.filter(x => x.id == wordId) != -1) {
+                var wordIndex = reviewing.findIndex(x => x.id == wordId);
+                word = reviewing[wordIndex];
+                var nextWord = reviewing[wordIndex + 1];
+                // reviewing.splice(wordIndex, 1);
+                // localStorage.setItem('reviewing', JSON.stringify(reviewing));
+
+                openWord(nextWord.wordUpId);
+            }
+        }
+
+        $.ajax({
+            url: `https://localhost:7135/api/words/next/${word.wordUpId}?` + "email=eduardoleodasilva@gmail.com",
+            method: "GET",
+            dataType: "json",
+            success: function (result) {
+                if (result.isSuccess) {
+                    var lista = $("#to-review");
+                    var lista2 = $("#in-repetition");
+                    lista.children().remove()
+                    lista2.children().remove();
+                    loadList();
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error("Erro na requisição AJAX:", status, error);
+            }
+        });
+
+
+
+    }
+
+    function buildQuestion(question) {
+        var cardQuestion = $("<div>").addClass("card");
+        var cardbody = $("<div>").addClass("card-body");
+        var cardBodyP = $("<p>").addClass("card-text");
+        var inputGroup = $("<div>").addClass("input-group");
+        var textArea = $("<textarea>").addClass("form-control");
+        var btnCheck = $("<button>").addClass("btn btn-primary");
+        var ul = $("<ul>").addClass("list-group");
+
+        var sentencesDiv = $("#sentences");
+
+
+
+        ul.attr('id', `list-errors-${question.id}`);
+
+        //btn
+        btnCheck.text("Check");
+        btnCheck.attr('type', 'button');
+        btnCheck.css('margin-top', '10px');
+
+        //text area
+        textArea.attr('aria-label', 'With textarea');
+
+        //card 
+        cardQuestion.css('margin-top', '10px');
+
+        textArea.attr('id', `answer-${question.id}`);
+        cardQuestion.attr('id', question.id);
+        //
+        cardBodyP.text(question.sentence);
+
+        cardbody.append(cardBodyP);
+        cardQuestion.append(cardbody);
+
+        inputGroup.append(textArea);
+
+        cardQuestion.append(inputGroup);
+
+        btnCheck.click(x => checkAnswer(question))
+
+        cardQuestion.append(btnCheck);
+
+        cardQuestion.append(ul);
+        sentencesDiv.append(cardQuestion);
+    }
+
+    function checkAnswer(question) {
+        var answer = $(`#answer-${question.id}`);
+        var card = $(`#${question.id}`);
+        var id = question.id;
+        var text = answer.val();
+        var errorsList = $(`#list-errors-${question.id}`);
+
+        $.ajax({
+            url: `https://localhost:7135/api/words/check`,
+            method: "POST",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            data: JSON.stringify({
+                sentence: question.sentence,
+                answer: text
+            }),
+            success: function (result) {
+                if (result.isSuccess) {
+
+                    var cardAlertSuccess = $("<div>").addClass("alert alert-success");
+                    cardAlertSuccess.attr('role', 'alert');
+                    cardAlertSuccess.text("Resposta certa")
+                    var cardAlertDanger = $("<div>").addClass("alert alert-danger");
+                    cardAlertDanger.attr('role', 'alert');
+                    cardAlertDanger.text("Há observações na sua resposta");
+
+                    if (result.data.isCorrect) {
+                        card.append(cardAlertSuccess);
+                    } else {
+                        card.append(cardAlertDanger);
+                    }
+
+                    result.data.mistakes.forEach(function (item) {
+                        var li = $("<li>").addClass("list-group-item");
+                        li.text(item)
+                        errorsList.append(li);
+                    });
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error("Erro na requisição AJAX:", status, error);
+            }
+        });
+
+
+    }
+
+    function updateWordInReview(word) {
+        var title = $("#current-card-body-title").text(word.name);
+        var text = $("#current-card-body-text").text(word.definition);
+        var btn = $("<button>").addClass("list-group-item list-group-item-action d-flex justify-content-between align-items-center");
+        btn.click(x => nextWord(word.id));
+        btn.text("Next word");
+        $("#current-card-body-text").append(btn);
+    }
+
+    function openWord(wordId) {
+        $.ajax({
+            url: `https://localhost:7135/api/words/open/${wordId}?` + "email=eduardoleodasilva@gmail.com",
+            method: "GET",
+            dataType: "json",
+            success: function (result) {
+                if (result.isSuccess) {
+                    updateWordInReview(result.data);
+                    generateSentence(result.data.name);
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error("Erro na requisição AJAX:", status, error);
+            }
+        });
+    }
+
+    function generateSentence(word) {
+        $("#sentences").html("");
+
+        $.ajax({
+            url: `https://localhost:7135/api/words/sentences/${word}`,
+            method: "GET",
+            dataType: "json",
+            success: function (result) {
+                if (result.isSuccess) {
+                    result.data.forEach(sentence => {
+                        buildQuestion(sentence);
+                    });
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error("Erro na requisição AJAX:", status, error);
+            }
+        });
+    }
+
+
+    function loadList() {
+        // Requisição AJAX para obter os itens do backend e preencher a lista
+        $.ajax({
+            url: "https://localhost:7135/api/words/toreview?" + "email=eduardoleodasilva@gmail.com",
+            method: "GET",
+            dataType: "json",
+            success: function (result) {
+                if (result.isSuccess) {
+                    localStorage.setItem("toreview", JSON.stringify(result.data))
+                    result.data.forEach(function (item) {
+                        adicionarLabel(item.name, item.wordUpId);
+                    });
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error("Erro na requisição AJAX:", status, error);
+            }
+        });
+
+        // Requisição AJAX para obter os itens do backend e preencher a lista
+        $.ajax({
+            url: "https://localhost:7135/api/words/reviewing?" + "email=eduardoleodasilva@gmail.com",
+            method: "GET",
+            dataType: "json",
+            success: function (result) {
+                if (result.isSuccess) {
+                    localStorage.setItem("reviewing", JSON.stringify(result.data))
+                    result.data.forEach(function (item) {
+                        adicionarInformacaoRevisao(item.name, item.nextReview, item.wordUpId);
+                    });
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error("Erro na requisição AJAX:", status, error);
+            }
+        });
+    }
+    loadList()
+</script>
+
+
+</html>

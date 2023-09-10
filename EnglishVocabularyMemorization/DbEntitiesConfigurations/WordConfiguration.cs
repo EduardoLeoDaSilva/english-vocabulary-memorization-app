@@ -13,8 +13,10 @@ namespace EnglishVocabularyMemorization.DbEntitiesConfigurations
             builder.HasIndex(x => x.WordUpId).IsUnique();
             builder.Property(x => x.Name);
             builder.Property(x => x.Definition);
-            builder.Property(x => x.TimeReviewed);
+            builder.Property(x => x.TimesReviewed);
             builder.Property(x => x.LastTimeReviewed);
+            builder.HasOne(x => x.User).WithMany(x => x.Words);
+            
         }
     }
 }

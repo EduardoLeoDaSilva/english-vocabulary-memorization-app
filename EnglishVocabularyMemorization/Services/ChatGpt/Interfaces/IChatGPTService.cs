@@ -12,11 +12,15 @@ namespace EnglishVocabularyMemorization.Services.ChatGpt.Interfaces
         /// <param name="request"></param>
         /// <returns></returns>
         Task<BaseResult<ChatCompletionResponse>> CompletionsAsync(ChatCompletionRequest request);
+
+        Task<BaseResult<ChatCompletionResponse>> GenerateSentences(string word);
+
+        Task<BaseResult<ChatCompletionResponse>> CheckAnswers(string sentence, string answer);
         /// <summary>
         /// Transcreve o áudio para o idioma de entrada.
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        Task<BaseResult<TranscriptionsResponse>> TranscriptionsAsync(TranscriptionsRequest request);
+        //Task<BaseResult<TranscriptionsResponse>> TranscriptionsAsync(TranscriptionsRequest request);
     }
 }

@@ -1,14 +1,21 @@
-﻿using System.Data.Entity;
+﻿using EnglishVocabularyMemorization.Entities;
+using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 
 namespace EnglishVocabularyMemorization
 {
     public class ApplicationContext : DbContext
     {
+        public DbSet<User> Users { get; set; }
+        public DbSet<Word> Words { get; set; }
 
-        protected override void OnModelCreating(DbModelBuilder modelBuilder)
+        public ApplicationContext(DbContextOptions options) : base(options)
         {
-            modelBuilder.Configurations.AddFromAssembly(Assembly.GetExecutingAssembly());
+
+        }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
             base.OnModelCreating(modelBuilder);
         }
 
