@@ -157,7 +157,7 @@ recognition.onresult = (event) => {
         }
 
         $.ajax({
-            url: `https://localhost:7135/api/words/next/${word.wordUpId}?` + "email=eduardoleodasilva@gmail.com",
+            url: `https://test-english-app.up.railway.app/api/words/next/${word.wordUpId}?` + "email=eduardoleodasilva@gmail.com",
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -265,7 +265,7 @@ recognition.onresult = (event) => {
         var wordID = localStorage.getItem("currentWord");
 
         $.ajax({
-            url: `https://localhost:7135/api/words/saveSentence?` +  `email=eduardoleodasilva@gmail.com&wordId=${wordID}`,
+            url: `https://test-english-app.up.railway.app/api/words/saveSentence?` +  `email=eduardoleodasilva@gmail.com&wordId=${wordID}`,
             method: "POST",
             contentType: "application/json; charset=utf-8",
             dataType: "json",
@@ -302,7 +302,7 @@ recognition.onresult = (event) => {
         var errorsList = $(`#list-errors-${question.id}`);
 
         $.ajax({
-            url: `https://localhost:7135/api/words/check`,
+            url: `https://test-english-app.up.railway.app/api/words/check`,
             method: "POST",
             contentType: "application/json; charset=utf-8",
             dataType: "json",
@@ -367,7 +367,7 @@ recognition.onresult = (event) => {
 
     function openWord(wordId) {
         $.ajax({
-            url: `https://localhost:7135/api/words/open/${wordId}?` + "email=eduardoleodasilva@gmail.com",
+            url: `https://test-english-app.up.railway.app/api/words/open/${wordId}?` + "email=eduardoleodasilva@gmail.com",
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -396,7 +396,7 @@ recognition.onresult = (event) => {
         $("#sentences").html("");
 
         $.ajax({
-            url: `https://localhost:7135/api/words/sentences/${word}?` + "email=eduardoleodasilva@gmail.com",
+            url: `https://test-english-app.up.railway.app/api/words/sentences/${word}?` + "email=eduardoleodasilva@gmail.com",
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -426,7 +426,7 @@ recognition.onresult = (event) => {
         $("#sentences").html("");
 
         $.ajax({
-            url: `https://localhost:7135/api/words/sentences/${word}?` + "email=eduardoleodasilva@gmail.com&ai=true",
+            url: `https://test-english-app.up.railway.app/api/words/sentences/${word}?` + "email=eduardoleodasilva@gmail.com&ai=true",
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -455,7 +455,7 @@ recognition.onresult = (event) => {
     function loadList() {
         // Requisição AJAX para obter os itens do backend e preencher a lista
         $.ajax({
-            url: "https://localhost:7135/api/words/toreview?" + "email=eduardoleodasilva@gmail.com",
+            url: "https://test-english-app.up.railway.app/api/words/toreview?" + "email=eduardoleodasilva@gmail.com",
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -482,7 +482,7 @@ recognition.onresult = (event) => {
 
         // Requisição AJAX para obter os itens do backend e preencher a lista
         $.ajax({
-            url: "https://localhost:7135/api/words/reviewing?" + "email=eduardoleodasilva@gmail.com",
+            url: "https://test-english-app.up.railway.app/api/words/reviewing?" + "email=eduardoleodasilva@gmail.com",
             method: "GET",
             dataType: "json",
             success: function (result) {
