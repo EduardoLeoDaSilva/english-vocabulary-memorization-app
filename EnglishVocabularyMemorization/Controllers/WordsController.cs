@@ -52,20 +52,40 @@ namespace EnglishVocabularyMemorization.Controllers
         }
 
         [HttpGet("sentences/{word}")]
-        public async Task<IActionResult> GenerateSentences(string word)
+        public async Task<IActionResult> GenerateSentences([FromQuery] string email, [FromRoute] string word, [FromQuery] bool ai)
         {
-            var result =  await _chatGptService.GenerateSentences(word);
-            if (result.IsSuccess)
+            var savedSentences =await _spacedRepetitionService.GetSavedSentences(email, word);
+            var sentences = new List<dynamic>();
+
+            if (ai)
             {
-                var json = result.Data.Choices.First().Message.Content;
-                var dynamic = JsonConvert.DeserializeObject<dynamic>(json);
-                var sentences = new List<dynamic>();
-                foreach (var item in dynamic.Sentences)
+                var result = await _chatGptService.GenerateSentences(word);
+
+                if (result.IsSuccess)
                 {
-                    sentences.Add(new { id = Guid.NewGuid(), sentence = item.Value});
+                    var json = result.Data.Choices.First().Message.Content;
+                    var dynamic = JsonConvert.DeserializeObject<dynamic>(json);
+
+                    foreach (var item in dynamic.TranslatedSentences)
+                    {
+                        sentences.Add(new { id = Guid.NewGuid(), sentence = item.Value });
+                    }
+
                 }
+
                 return Ok(BaseResult<dynamic>.CreateValidResult(sentences));
+
             }
+
+
+            foreach (var savedSentence in savedSentences.Data)
+            {
+                sentences.Add(new { id = Guid.NewGuid(), sentence = savedSentence.Text, answers = savedSentence.LastAnswers });
+            }
+
+            return Ok(BaseResult<dynamic>.CreateValidResult(sentences));
+
+
             return BadRequest(BaseResult<dynamic>.CreateInvalidResult("Error trying to generate answers"));
         }
 
@@ -83,9 +103,26 @@ namespace EnglishVocabularyMemorization.Controllers
             }
             return BadRequest(BaseResult<CheckResponse>.CreateInvalidResult("Error trying to generate answers"));
         }
+
+        [HttpPost("saveSentence")]
+        public async Task<IActionResult> SaveSentence([FromQuery] string email,[FromQuery] string wordId, [FromBody] SaveQuestion question)
+        {
+            var result = await _spacedRepetitionService.SaveSentence(question.Sentence, question.Answer, wordId);
+            if (result.IsSuccess)
+            {
+                return Ok(BaseResult<bool>.CreateValidResult(true));
+            }
+            return BadRequest(BaseResult<CheckResponse>.CreateInvalidResult("Error trying to generate answers"));
+        }
     }
 
     public class CheckRequest
+    {
+        public string Sentence { get; set; }
+        public string Answer { get; set; }
+    }
+
+    public class SaveQuestion
     {
         public string Sentence { get; set; }
         public string Answer { get; set; }

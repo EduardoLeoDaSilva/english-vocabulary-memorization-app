@@ -8,6 +8,8 @@
     <!-- Inclua os arquivos do Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://jsuites.net/v4/jsuites.js"></script>
+    <link rel="stylesheet" href="https://jsuites.net/v4/jsuites.css" type="text/css" />
 </head>
 
 <body>
@@ -42,7 +44,7 @@
             <div class="card" id="current-card">
                 <div class="card-body" id="current-card-body">
                     <h5 class="card-title" id="current-card-body-title">Card 2</h5>
-                    <p class="card-text" id="current-card-body-text">Conteúdo do Card 2.</p>
+                    <div class="card-text" style="display: flex; flex-direction: column; gap: 16px" id="current-card-body-text">Conteúdo do Card 2.</div>
                 </div>
                 <br>
             </div>
@@ -67,7 +69,7 @@
                     <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
                         <div class="accordion-body">
                             <div class="list-group" id="in-repetition">
-            
+
                             </div>
                         </div>
                     </div>
@@ -85,6 +87,34 @@
 </body>
 
 <script>
+    window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const grammar =
+  "#JSGF V1.0; grammar colors; public <color> = aqua | azure | beige | bisque | black | blue | brown | chocolate | coral | crimson | cyan | fuchsia | ghostwhite | gold | goldenrod | gray | green | indigo | ivory | khaki | lavender | lime | linen | magenta | maroon | moccasin | navy | olive | orange | orchid | peru | pink | plum | purple | red | salmon | sienna | silver | snow | tan | teal | thistle | tomato | turquoise | violet | white | yellow ;";
+    const recognition = new SpeechRecognition(); 
+// const speechRecognitionList = new SpeechGrammarList();
+// speechRecognitionList.addFromString(grammar, 1);
+// recognition.grammars = speechRecognitionList;
+recognition.continuous = false;
+recognition.lang = "en-US";
+recognition.interimResults = false;
+recognition.maxAlternatives = 1;
+
+const diagnostic = document.querySelector(".output");
+const bg = document.querySelector("html");
+
+// document.body.onclick = () => {
+//   recognition.start();
+//   console.log("Ready to receive a color command.");
+// };
+
+recognition.onresult = (event) => {
+  const text = event.results[0][0].transcript;
+  var questionToFill = localStorage.getItem('questionAnsweredByVoice')
+  var answer = $(`#${questionToFill}`);
+  answer.val(text);
+  answer.text(text);
+};
+
     // Função para adicionar novas labels à lista
     function adicionarLabel(texto, wordId) {
         var lista = $("#to-review");
@@ -132,6 +162,10 @@
             dataType: "json",
             success: function (result) {
                 if (result.isSuccess) {
+                    jSuites.notification({
+                        name: 'Jsuites toast notification',
+                        message: 'Successfully Update',
+                    })
                     var lista = $("#to-review");
                     var lista2 = $("#in-repetition");
                     lista.children().remove()
@@ -141,6 +175,11 @@
             },
             error: function (xhr, status, error) {
                 console.error("Erro na requisição AJAX:", status, error);
+                jSuites.notification({
+                    error: 1,
+                    name: 'Error message',
+                    message: 'Something went wrong',
+                })
             }
         });
 
@@ -155,11 +194,14 @@
         var inputGroup = $("<div>").addClass("input-group");
         var textArea = $("<textarea>").addClass("form-control");
         var btnCheck = $("<button>").addClass("btn btn-primary");
+        var btnVoice = $("<button>").addClass("btn btn-primary");
+        var btnSave = $("<button>").addClass("btn btn-primary");
         var ul = $("<ul>").addClass("list-group");
 
         var sentencesDiv = $("#sentences");
 
-
+        btnVoice.attr('id', `btn-voice-${question.id}`)
+        btnSave.attr('id', `btn-save-${question.id}`)
 
         ul.attr('id', `list-errors-${question.id}`);
 
@@ -167,6 +209,17 @@
         btnCheck.text("Check");
         btnCheck.attr('type', 'button');
         btnCheck.css('margin-top', '10px');
+
+        //btnVoice
+        btnVoice.text("Speak");
+        btnVoice.attr('type', 'button');
+        btnVoice.css('margin-top', '10px');
+
+        //btnSave
+        btnSave.text("Save");
+        btnSave.attr('type', 'button');
+        btnSave.css('margin-top', '10px');
+
 
         //text area
         textArea.attr('aria-label', 'With textarea');
@@ -187,11 +240,58 @@
         cardQuestion.append(inputGroup);
 
         btnCheck.click(x => checkAnswer(question))
+        btnVoice.click(x => { 
+            localStorage.setItem('questionAnsweredByVoice', `answer-${question.id}`)
+            recognition.start()
+        });
+
+        btnSave.click(x => saveQuestion(question))
+
 
         cardQuestion.append(btnCheck);
+        cardQuestion.append(btnVoice);
+        cardQuestion.append(btnSave);
 
         cardQuestion.append(ul);
         sentencesDiv.append(cardQuestion);
+    }
+
+    function saveQuestion(question) {
+        var answer = $(`#answer-${question.id}`);
+        var card = $(`#${question.id}`);
+        var id = question.id;
+        var text = answer.val();
+        
+        var wordID = localStorage.getItem("currentWord");
+
+        $.ajax({
+            url: `https://localhost:7135/api/words/saveSentence?` +  `email=eduardoleodasilva@gmail.com&wordId=${wordID}`,
+            method: "POST",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            data: JSON.stringify({
+                sentence: question.sentence,
+                answer: text
+            }),
+            success: function (result) {
+                if (result.isSuccess) {
+                    jSuites.notification({
+                        name: 'Jsuites toast notification',
+                        message: 'Successfully Update',
+                    })
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error("Erro na requisição AJAX:", status, error);
+                jSuites.notification({
+                    error: 1,
+                    name: 'Error message',
+                    message: 'Something went wrong',
+                })
+            }
+        });
+
+
     }
 
     function checkAnswer(question) {
@@ -212,6 +312,10 @@
             }),
             success: function (result) {
                 if (result.isSuccess) {
+                    jSuites.notification({
+                        name: 'Jsuites toast notification',
+                        message: 'Successfully Update',
+                    })
 
                     var cardAlertSuccess = $("<div>").addClass("alert alert-success");
                     cardAlertSuccess.attr('role', 'alert');
@@ -235,6 +339,11 @@
             },
             error: function (xhr, status, error) {
                 console.error("Erro na requisição AJAX:", status, error);
+                jSuites.notification({
+                    error: 1,
+                    name: 'Error message',
+                    message: 'Something went wrong',
+                })
             }
         });
 
@@ -244,10 +353,16 @@
     function updateWordInReview(word) {
         var title = $("#current-card-body-title").text(word.name);
         var text = $("#current-card-body-text").text(word.definition);
-        var btn = $("<button>").addClass("list-group-item list-group-item-action d-flex justify-content-between align-items-center");
+        var btn = $("<button>").addClass("btn btn-primary");
+        var btnGenerateSentences = $("<button>").addClass("btn btn-primary");
         btn.click(x => nextWord(word.id));
         btn.text("Next word");
+
+
+        btnGenerateSentences.click(x => generateSentenceWithAi(word.name))
+        btnGenerateSentences.text("Gerar frases com AI");
         $("#current-card-body-text").append(btn);
+        $("#current-card-body-text").append(btnGenerateSentences);
     }
 
     function openWord(wordId) {
@@ -257,12 +372,22 @@
             dataType: "json",
             success: function (result) {
                 if (result.isSuccess) {
+                    localStorage.setItem("currentWord", wordId);
+                    jSuites.notification({
+                        name: 'Jsuites toast notification',
+                        message: 'Successfully Update',
+                    })
                     updateWordInReview(result.data);
                     generateSentence(result.data.name);
                 }
             },
             error: function (xhr, status, error) {
                 console.error("Erro na requisição AJAX:", status, error);
+                jSuites.notification({
+                    error: 1,
+                    name: 'Error message',
+                    message: 'Something went wrong',
+                })
             }
         });
     }
@@ -271,11 +396,15 @@
         $("#sentences").html("");
 
         $.ajax({
-            url: `https://localhost:7135/api/words/sentences/${word}`,
+            url: `https://localhost:7135/api/words/sentences/${word}?` + "email=eduardoleodasilva@gmail.com",
             method: "GET",
             dataType: "json",
             success: function (result) {
                 if (result.isSuccess) {
+                    jSuites.notification({
+                        name: 'Jsuites toast notification',
+                        message: 'Successfully Update',
+                    })
                     result.data.forEach(sentence => {
                         buildQuestion(sentence);
                     });
@@ -283,6 +412,41 @@
             },
             error: function (xhr, status, error) {
                 console.error("Erro na requisição AJAX:", status, error);
+                jSuites.notification({
+                    error: 1,
+                    name: 'Error message',
+                    message: 'Something went wrong',
+                })
+            }
+        });
+    }
+
+
+    function generateSentenceWithAi(word) {
+        $("#sentences").html("");
+
+        $.ajax({
+            url: `https://localhost:7135/api/words/sentences/${word}?` + "email=eduardoleodasilva@gmail.com&ai=true",
+            method: "GET",
+            dataType: "json",
+            success: function (result) {
+                if (result.isSuccess) {
+                    jSuites.notification({
+                        name: 'Jsuites toast notification',
+                        message: 'Successfully Update',
+                    })
+                    result.data.forEach(sentence => {
+                        buildQuestion(sentence);
+                    });
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error("Erro na requisição AJAX:", status, error);
+                jSuites.notification({
+                    error: 1,
+                    name: 'Error message',
+                    message: 'Something went wrong',
+                })
             }
         });
     }
@@ -296,6 +460,10 @@
             dataType: "json",
             success: function (result) {
                 if (result.isSuccess) {
+                    jSuites.notification({
+                        name: 'Jsuites toast notification',
+                        message: 'Successfully Update',
+                    })
                     localStorage.setItem("toreview", JSON.stringify(result.data))
                     result.data.forEach(function (item) {
                         adicionarLabel(item.name, item.wordUpId);
@@ -304,6 +472,11 @@
             },
             error: function (xhr, status, error) {
                 console.error("Erro na requisição AJAX:", status, error);
+                jSuites.notification({
+                    error: 1,
+                    name: 'Error message',
+                    message: 'Something went wrong',
+                })
             }
         });
 
@@ -314,6 +487,10 @@
             dataType: "json",
             success: function (result) {
                 if (result.isSuccess) {
+                    jSuites.notification({
+                        name: 'Jsuites toast notification',
+                        message: 'Successfully Update',
+                    })
                     localStorage.setItem("reviewing", JSON.stringify(result.data))
                     result.data.forEach(function (item) {
                         adicionarInformacaoRevisao(item.name, item.nextReview, item.wordUpId);
@@ -322,9 +499,18 @@
             },
             error: function (xhr, status, error) {
                 console.error("Erro na requisição AJAX:", status, error);
+                jSuites.notification({
+                    error: 1,
+                    name: 'Error message',
+                    message: 'Something went wrong',
+                })
             }
         });
     }
+
+
+
+
     loadList()
 </script>
 

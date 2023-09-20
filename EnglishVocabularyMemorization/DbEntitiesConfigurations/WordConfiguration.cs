@@ -1,7 +1,6 @@
 ﻿using EnglishVocabularyMemorization.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System.Data.Entity.ModelConfiguration;
 
 namespace EnglishVocabularyMemorization.DbEntitiesConfigurations
 {
@@ -16,7 +15,8 @@ namespace EnglishVocabularyMemorization.DbEntitiesConfigurations
             builder.Property(x => x.TimesReviewed);
             builder.Property(x => x.LastTimeReviewed);
             builder.HasOne(x => x.User).WithMany(x => x.Words);
-            
+            builder.HasMany(x => x.SavedSentences).WithOne(x => x.Word);
+
         }
     }
 }

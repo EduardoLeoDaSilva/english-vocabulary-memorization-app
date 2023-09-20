@@ -15,6 +15,8 @@ namespace EnglishVocabularyMemorization.Entities
 
         public User User { get; internal set; }
 
+        public List<Sentence> SavedSentences { get; set; }
+
         [NotMapped]
         public string NextReview
         {

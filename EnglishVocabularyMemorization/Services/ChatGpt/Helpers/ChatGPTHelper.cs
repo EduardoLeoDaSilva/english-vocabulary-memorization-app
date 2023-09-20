@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using EnglishVocabularyMemorization.Entities;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
 namespace EnglishVocabularyMemorization.Services.ChatGpt.Helpers
@@ -6,9 +7,11 @@ namespace EnglishVocabularyMemorization.Services.ChatGpt.Helpers
     public class ChatGPTHelper
     {
         private readonly IConfiguration _configuration;
-        public ChatGPTHelper(IConfiguration configuration)
+        private ApplicationContext _context;
+        public ChatGPTHelper(IConfiguration configuration, ApplicationContext context)
         {
             _configuration = configuration;
+            _context = context;
         }
 
         /// <summary>
@@ -39,7 +42,8 @@ namespace EnglishVocabularyMemorization.Services.ChatGpt.Helpers
         /// <returns></returns>
         public  string GetApiKey()
         {
-            var accessToken = _configuration.GetValue<string>("ChatGPT:ApiKey");
+            var apiKey = _context.Set<Config>().Where(x => x.Key == "ChatGPTKey").FirstOrDefault();
+            var accessToken = apiKey.Value;
             return accessToken;
         }
 

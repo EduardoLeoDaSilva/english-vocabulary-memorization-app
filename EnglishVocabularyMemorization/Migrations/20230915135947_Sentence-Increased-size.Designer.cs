@@ -3,6 +3,7 @@ using System;
 using EnglishVocabularyMemorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,36 +11,16 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EnglishVocabularyMemorization.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    partial class ApplicationContextModelSnapshot : ModelSnapshot
+    [Migration("20230915135947_Sentence-Increased-size")]
+    partial class SentenceIncreasedsize
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "7.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
-
-            modelBuilder.Entity("EnglishVocabularyMemorization.Entities.Config", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("Key")
-                        .IsRequired()
-                        .HasColumnType("varchar(95)");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Key")
-                        .IsUnique();
-
-                    b.ToTable("Configs");
-                });
 
             modelBuilder.Entity("EnglishVocabularyMemorization.Entities.Sentence", b =>
                 {

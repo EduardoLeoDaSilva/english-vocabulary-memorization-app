@@ -39,8 +39,14 @@ namespace EnglishVocabularyMemorization.Services
 
         public async Task<BaseResult<List<Word>>> GetWordsInRepetitionProcess(string email)
         {
-            var wordsDb = await _applicationService.Words.Include(x => x.User).Where(x => x.TimesReviewed > 0 && x.User.Email == email).OrderByDescending(x => x.LastTimeReviewed).ToListAsync();
+            var wordsDb = await _applicationService.Words.Include(x => x.User).Where(x => x.TimesReviewed > 0 && x.User.Email == email).OrderBy(x => x.LastTimeReviewed).ToListAsync();
             return BaseResult<List<Word>>.CreateValidResult(wordsDb);
+        }
+
+        public async Task<BaseResult<List<Sentence>>> GetSavedSentences(string email, string word)
+        {
+            var sentences = await _applicationService.Sentences.Include(x => x.Word).ThenInclude(x => x.User).Where(x => x.Word.Name == word  && x.Word.User.Email == email).ToListAsync();
+            return BaseResult<List<Sentence>>.CreateValidResult(sentences);
         }
 
         public async Task<BaseResult<List<Word>>> GetWordsInRepetitionToReview(string email)
@@ -49,6 +55,28 @@ namespace EnglishVocabularyMemorization.Services
             return BaseResult<List<Word>>.CreateValidResult(wordsDb);
         }
 
+        public async Task<BaseResult<bool>> SaveSentence(string sentence, string answer, string wordId)
+        {
+            var word = await _applicationService.Words.Where(x => x.WordUpId == wordId).FirstOrDefaultAsync();
+            var dbSentence = await _applicationService.Sentences.Where(x => x.Text == sentence).FirstOrDefaultAsync();
+
+            if (dbSentence == null)
+            {
+                dbSentence = new Sentence { Id = Guid.NewGuid(), Text = sentence, LastAnswers = new List<string> { answer }, WordId = word.Id };
+                await _applicationService.Sentences.AddAsync(dbSentence);
+            }
+            else
+            {
+                dbSentence.LastAnswers.Add(answer);
+                _applicationService.Sentences.Update(dbSentence);
+
+            }
+
+            await _applicationService.SaveChangesAsync();
+            
+            return BaseResult<bool>.CreateValidResult(true);
+
+        }
 
         public async Task<BaseResult<Word>> OpenWord(string wordId, string email)
         {
