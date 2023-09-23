@@ -38,22 +38,24 @@
         </div>
 
         <!-- Coluna de Flash Cards -->
-        <div class="col-md-6">
-            <h1 class="text-center mb-4">Flash Cards</h1>
-            <p style="padding-top: 20px;"></p>
-            <div class="card" id="current-card">
-                <div class="card-body" id="current-card-body">
-                    <h5 class="card-title" id="current-card-body-title">Card 2</h5>
-                    <div class="card-text" style="display: flex; flex-direction: column; gap: 16px" id="current-card-body-text">Conteúdo do Card 2.</div>
+            <div class="col-md-6">
+                <h1 class="text-center mb-4">Flash Cards</h1>
+                <p style="padding-top: 20px;"></p>
+                <button class="btn btn-primary" id="generateExamBtn" onclick="generateExam()">Generate exam</button>
+                <button class="btn btn-primary" id="finishExamBtn" onclick="finishExam()" disabled>Finish exam</button>
+                <div class="card" id="current-card">
+                    <div class="card-body" id="current-card-body">
+                        <h5 class="card-title" id="current-card-body-title">Card 2</h5>
+                        <div class="card-text" style="display: flex; flex-direction: column; gap: 16px" id="current-card-body-text">Conteúdo do Card 2.</div>
+                    </div>
+                    <br>
                 </div>
-                <br>
+
+                <div id="sentences">
+
+                </div>
+
             </div>
-
-            <div id="sentences">
-
-            </div>
-
-        </div>
 
         <!-- Coluna de Informações de Revisão -->
         <div class="col-md-3 mb-3" style="max-height:93vh; overflow:auto; z-index: 1000;">
@@ -157,7 +159,7 @@ recognition.onresult = (event) => {
         }
 
         $.ajax({
-            url: `https://test-english-app.up.railway.app/api/words/next/${word.wordUpId}?` + "email=eduardoleodasilva@gmail.com",
+            url: `https://localhost:7135/api/words/next/${word.wordUpId}?` + "email=eduardoleodasilva@gmail.com",
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -196,6 +198,8 @@ recognition.onresult = (event) => {
         var btnCheck = $("<button>").addClass("btn btn-primary");
         var btnVoice = $("<button>").addClass("btn btn-primary");
         var btnSave = $("<button>").addClass("btn btn-primary");
+        var originalSentencebtn = $("<button>").addClass("btn");
+        var origignalSentenceP = $("<p>");
         var ul = $("<ul>").addClass("list-group");
 
         var sentencesDiv = $("#sentences");
@@ -230,7 +234,15 @@ recognition.onresult = (event) => {
         textArea.attr('id', `answer-${question.id}`);
         cardQuestion.attr('id', question.id);
         //
-        cardBodyP.text(question.sentence);
+
+        origignalSentenceP.text(question.originalSentence);
+        origignalSentenceP.css("display", "none");
+        originalSentencebtn.text("Show Original Message");
+        originalSentencebtn.click(x => origignalSentenceP.toggle())
+
+        cardQuestion.append(originalSentencebtn);
+        cardQuestion.append(origignalSentenceP);
+        cardBodyP.text(question.text);
 
         cardbody.append(cardBodyP);
         cardQuestion.append(cardbody);
@@ -265,13 +277,14 @@ recognition.onresult = (event) => {
         var wordID = localStorage.getItem("currentWord");
 
         $.ajax({
-            url: `https://test-english-app.up.railway.app/api/words/saveSentence?` +  `email=eduardoleodasilva@gmail.com&wordId=${wordID}`,
+            url: `https://localhost:7135/api/words/saveSentence?` +  `email=eduardoleodasilva@gmail.com&wordId=${wordID}`,
             method: "POST",
             contentType: "application/json; charset=utf-8",
             dataType: "json",
             data: JSON.stringify({
-                sentence: question.sentence,
-                answer: text
+                sentence: question.text,
+                answer: text,
+                originalSentence: question.originalSentence,
             }),
             success: function (result) {
                 if (result.isSuccess) {
@@ -302,12 +315,12 @@ recognition.onresult = (event) => {
         var errorsList = $(`#list-errors-${question.id}`);
 
         $.ajax({
-            url: `https://test-english-app.up.railway.app/api/words/check`,
+            url: `https://localhost:7135/api/words/check`,
             method: "POST",
             contentType: "application/json; charset=utf-8",
             dataType: "json",
             data: JSON.stringify({
-                sentence: question.sentence,
+                sentence: question.text,
                 answer: text
             }),
             success: function (result) {
@@ -360,14 +373,14 @@ recognition.onresult = (event) => {
 
 
         btnGenerateSentences.click(x => generateSentenceWithAi(word.name))
-        btnGenerateSentences.text("Gerar frases com AI");
+        btnGenerateSentences.text("Sentence with AI");
         $("#current-card-body-text").append(btn);
         $("#current-card-body-text").append(btnGenerateSentences);
     }
 
     function openWord(wordId) {
         $.ajax({
-            url: `https://test-english-app.up.railway.app/api/words/open/${wordId}?` + "email=eduardoleodasilva@gmail.com",
+            url: `https://localhost:7135/api/words/open/${wordId}?` + "email=eduardoleodasilva@gmail.com",
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -392,11 +405,73 @@ recognition.onresult = (event) => {
         });
     }
 
+
+    function generateExam() {
+        $.ajax({
+            url: `https://localhost:7135/api/words/generateExam` + "?email=eduardoleodasilva@gmail.com",
+            method: "GET",
+            dataType: "json",
+            success: function (result) {
+                if (result.isSuccess) {
+                    jSuites.notification({
+                        name: 'Jsuites toast notification',
+                        message: 'Successfully Update',
+                    })
+                    $("#sentences").empty();
+                    localStorage.setItem('lastExamId', result.data.id);
+                    $("#finishExamBtn").removeAttr("disabled");
+
+                    result.data.sentences.forEach(sentence => {
+                        buildQuestion(sentence);
+                    });
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error("Erro na requisição AJAX:", status, error);
+                jSuites.notification({
+                    error: 1,
+                    name: 'Error message',
+                    message: 'Something went wrong',
+                })
+            }
+        });
+    }
+
+    function finishExam() {
+        var lasExamId = localStorage.getItem('lastExamId');
+        $.ajax({
+            url: `https://localhost:7135/api/words/finishExam?id=${lasExamId}`,
+            method: "GET",
+            dataType: "json",
+            success: function (result) {
+                if (result.isSuccess) {
+                    $("#finishExamBtn").attr("disabled");
+                    localStorage.removeItem('lasExamId');
+                    $("#sentences").empty();
+                    jSuites.notification({
+                        name: 'Jsuites toast notification',
+                        message: 'Successfully Update',
+                    })
+
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error("Erro na requisição AJAX:", status, error);
+                jSuites.notification({
+                    error: 1,
+                    name: 'Error message',
+                    message: 'Something went wrong',
+                })
+            }
+        });
+    }
+
+
     function generateSentence(word) {
         $("#sentences").html("");
 
         $.ajax({
-            url: `https://test-english-app.up.railway.app/api/words/sentences/${word}?` + "email=eduardoleodasilva@gmail.com",
+            url: `https://localhost:7135/api/words/sentences/${word}?` + "email=eduardoleodasilva@gmail.com",
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -426,7 +501,7 @@ recognition.onresult = (event) => {
         $("#sentences").html("");
 
         $.ajax({
-            url: `https://test-english-app.up.railway.app/api/words/sentences/${word}?` + "email=eduardoleodasilva@gmail.com&ai=true",
+            url: `https://localhost:7135/api/words/sentences/${word}?` + "email=eduardoleodasilva@gmail.com&ai=true",
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -455,7 +530,7 @@ recognition.onresult = (event) => {
     function loadList() {
         // Requisição AJAX para obter os itens do backend e preencher a lista
         $.ajax({
-            url: "https://test-english-app.up.railway.app/api/words/toreview?" + "email=eduardoleodasilva@gmail.com",
+            url: "https://localhost:7135/api/words/toreview?" + "email=eduardoleodasilva@gmail.com",
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -482,7 +557,7 @@ recognition.onresult = (event) => {
 
         // Requisição AJAX para obter os itens do backend e preencher a lista
         $.ajax({
-            url: "https://test-english-app.up.railway.app/api/words/reviewing?" + "email=eduardoleodasilva@gmail.com",
+            url: "https://localhost:7135/api/words/reviewing?" + "email=eduardoleodasilva@gmail.com",
             method: "GET",
             dataType: "json",
             success: function (result) {

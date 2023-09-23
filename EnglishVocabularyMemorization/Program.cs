@@ -18,16 +18,31 @@ builder.Services.AddScoped<IWordupService, WordupService>();
 builder.Services.AddScoped<ISpacedRepetitionService, SpacedRepetitionService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ChatGPTHelper>();
-builder.Services.AddCors(p => p.AddPolicy("corsapp", builder =>
-{
-    builder.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
-}));
+//builder.Services.AddCors(p => p.AddPolicy("corsapp", builder =>
+//{
+//    builder
+//    .WithOrigins("https://english-vocabulary-memorization-app.vercel.app")
+//    .AllowAnyMethod()
+//    .AllowAnyHeader();
+//}));
+
+
 
 builder.Services.AddDbContextFactory<ApplicationContext>(options => options.UseMySql(builder.Configuration.GetConnectionString("Default"), ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("Default"))));
 
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader();
+    });
+});
 
 var app = builder.Build();
 
@@ -37,9 +52,15 @@ var app = builder.Build();
 
 // }
 
+app.UseCors(); ;
+
+
+
 app.UseSwagger();
 app.UseSwaggerUI();
-app.UseCors("corsapp");
+
+
+
 app.UseHttpsRedirection();
 
 app.UseAuthorization();

@@ -1,4 +1,5 @@
-﻿using EnglishVocabularyMemorization.Models;
+﻿using EnglishVocabularyMemorization.Entities;
+using EnglishVocabularyMemorization.Models;
 using EnglishVocabularyMemorization.Services;
 using EnglishVocabularyMemorization.Services.ChatGpt.Interfaces;
 using EnglishVocabularyMemorization.Services.Wordup;
@@ -66,9 +67,11 @@ namespace EnglishVocabularyMemorization.Controllers
                     var json = result.Data.Choices.First().Message.Content;
                     var dynamic = JsonConvert.DeserializeObject<dynamic>(json);
 
-                    foreach (var item in dynamic.TranslatedSentences)
+                    var index = 0;
+                    foreach (var item in dynamic.TranslatedSentences )
                     {
-                        sentences.Add(new { id = Guid.NewGuid(), sentence = item.Value });
+                        sentences.Add(new { id = Guid.NewGuid(), text = item.Value, originalSentence = dynamic.Sentences[index].Value });
+                        index++;
                     }
 
                 }
@@ -80,7 +83,7 @@ namespace EnglishVocabularyMemorization.Controllers
 
             foreach (var savedSentence in savedSentences.Data)
             {
-                sentences.Add(new { id = Guid.NewGuid(), sentence = savedSentence.Text, answers = savedSentence.LastAnswers });
+                sentences.Add(new { id = Guid.NewGuid(), text = savedSentence.Text, answers = savedSentence.LastAnswers, originalSentence = savedSentence.OriginalSentence });
             }
 
             return Ok(BaseResult<dynamic>.CreateValidResult(sentences));
@@ -107,10 +110,35 @@ namespace EnglishVocabularyMemorization.Controllers
         [HttpPost("saveSentence")]
         public async Task<IActionResult> SaveSentence([FromQuery] string email,[FromQuery] string wordId, [FromBody] SaveQuestion question)
         {
-            var result = await _spacedRepetitionService.SaveSentence(question.Sentence, question.Answer, wordId);
+            var result = await _spacedRepetitionService.SaveSentence(question.Sentence, question.Answer, question.OriginalSentence , wordId);
             if (result.IsSuccess)
             {
                 return Ok(BaseResult<bool>.CreateValidResult(true));
+            }
+            return BadRequest(BaseResult<CheckResponse>.CreateInvalidResult("Error trying to generate answers"));
+        }
+
+        [HttpGet("generateExam")]
+        public async Task<IActionResult> GenerateExam([FromQuery] string email)
+        {
+            var result = await _spacedRepetitionService.GenerateExam(email);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
+
+
+        [HttpGet("finishExam")]
+        public async Task<IActionResult> FinishExam([FromQuery] string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+                return BadRequest(BaseResult<CheckResponse>.CreateInvalidResult("ID do teste vazio"));
+            var result = await _spacedRepetitionService.FinishExam(id);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
             }
             return BadRequest(BaseResult<CheckResponse>.CreateInvalidResult("Error trying to generate answers"));
         }
@@ -126,6 +154,7 @@ namespace EnglishVocabularyMemorization.Controllers
     {
         public string Sentence { get; set; }
         public string Answer { get; set; }
+        public string OriginalSentence { get; set; }
     }
 
     public class CheckResponse

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace EnglishVocabularyMemorization.Entities
 {
@@ -15,6 +16,9 @@ namespace EnglishVocabularyMemorization.Entities
 
         public User User { get; internal set; }
 
+        public DateTime LastExam { get; set; }
+
+        [JsonIgnore]
         public List<Sentence> SavedSentences { get; set; }
 
         [NotMapped]

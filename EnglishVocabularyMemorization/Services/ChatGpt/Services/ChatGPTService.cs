@@ -21,7 +21,13 @@ namespace EnglishVocabularyMemorization.Services.ChatGpt.Services
             _chatGPTHelper = chatGPTHelper;
             _baseUrl = _chatGPTHelper.GetBaseUrl();
             _httpClient = new HttpClient();
-            _chatGPTHelper.GetHeader().ToList().ForEach(header => _httpClient.DefaultRequestHeaders.Add(header.Key, header.Value));
+            _chatGPTHelper.GetHeader().ToList().ForEach(header =>
+            {
+                if (!_httpClient.DefaultRequestHeaders.Any(h => h.Key == header.Key))
+                {
+                    _httpClient.DefaultRequestHeaders.Add(header.Key, header.Value);
+                }
+            });
             _applicationContext = applicationContext;
         }
 
@@ -62,9 +68,9 @@ namespace EnglishVocabularyMemorization.Services.ChatGpt.Services
             request.Model = "gpt-3.5-turbo";
             request.Messages = new List<Models.Shared.Message>();
             //var msg = $"context: The following is a fictional conversation between the USER and Dudi, an AI friend inside the Dudi app who is creative,helpful, and witty.:\n\nDudi: Hi there!,Let's get started. What's on your mind?\nUSER: Write 20 sentences to show the use of the following word: {word}. These sentences must be in portuguese. it is important that the word {word} is in portuguese in each sentence, the translation of the word, that's what I mean, so I can try to translate back to english, please don't make up unexistent meaning\n\n-----------------\n\nyour task: Return a JSON node in the format of" + "{ \"Sentences\": \"[]\", \"UsedMeanings\":\"[...]\"} where\n-Sentences: Short messages containing the word provided in portugues, the work must be surrounded with * *, that Dudi would say in response to the USER to keep the conversation going. Use language that is understandable by an ESL learner at UpperIntermediate level.\n-UsedMeanings: All the meaning used for the word " + word + ".";
-            var msg = $"context: The following is a fictional conversation between the USER and Dudi, an AI friend inside the Dudi app who is creative,helpful, and witty.:\n\nDudi: Hi there!,Let's get started. What's on your mind?\nUSER: Write 10 sentences to show the use of the following word: '{word}'. Try to generate them in differente ways with different meanings.\n\n-----------------\n\nyour task: Return a JSON node in the format of" + "{ \"Sentences\": \"[]\", \"UsedMeanings\":\"[...]\",  \"TranslatedSentences\":\"[...]\"} where\n-Sentences: Short messages containing the word provided in portugues that Dudi would say in response to the USER to keep the conversation going. Use language that is understandable by an ESL learner at UpperIntermediate level.\n-UsedMeanings: All the meaning used for the word '" + word +"'.\n-TranslatedSentences: The generated sentences translated to portuguese";
-            request.Messages.Add(new Models.Shared.Message { Role = "system", Content= msg });
-            var content = new StringContent(JsonConvert.SerializeObject(request, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore}), Encoding.UTF8, "application/json");
+            var msg = $"context: The following is a fictional conversation between the USER and Dudi, an AI friend inside the Dudi app who is creative,helpful, and witty.:\n\nDudi: Hi there!,Let's get started. What's on your mind?\nUSER: Write 10 sentences to show the use of the following word: '{word}'. Try to generate them in differente ways with different meanings.\n\n-----------------\n\nyour task: Return a JSON node in the format of" + "{ \"Sentences\": \"[]\", \"UsedMeanings\":\"[...]\",  \"TranslatedSentences\":\"[...]\"} where\n-Sentences: Short messages containing the word provided in portugues that Dudi would say in response to the USER to keep the conversation going. Use language that is understandable by an ESL learner at UpperIntermediate level.\n-UsedMeanings: All the meaning used for the word '" + word + "'.\n-TranslatedSentences: The generated sentences translated to portuguese";
+            request.Messages.Add(new Models.Shared.Message { Role = "system", Content = msg });
+            var content = new StringContent(JsonConvert.SerializeObject(request, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }), Encoding.UTF8, "application/json");
             var response = await HttpClient.PostAsync(
                 $"{_baseUrl}/v1/chat/completions", content);
 

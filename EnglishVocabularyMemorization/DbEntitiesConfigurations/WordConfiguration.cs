@@ -14,6 +14,7 @@ namespace EnglishVocabularyMemorization.DbEntitiesConfigurations
             builder.Property(x => x.Definition);
             builder.Property(x => x.TimesReviewed);
             builder.Property(x => x.LastTimeReviewed);
+            builder.Property(x => x.LastExam);
             builder.HasOne(x => x.User).WithMany(x => x.Words);
             builder.HasMany(x => x.SavedSentences).WithOne(x => x.Word);
 

@@ -45,7 +45,7 @@ namespace EnglishVocabularyMemorization.Services
 
         public async Task<BaseResult<List<Sentence>>> GetSavedSentences(string email, string word)
         {
-            var sentences = await _applicationService.Sentences.Include(x => x.Word).ThenInclude(x => x.User).Where(x => x.Word.Name == word  && x.Word.User.Email == email).ToListAsync();
+            var sentences = await _applicationService.Sentences.Include(x => x.Word).ThenInclude(x => x.User).Where(x => x.Word.Name == word && x.Word.User.Email == email).ToListAsync();
             return BaseResult<List<Sentence>>.CreateValidResult(sentences);
         }
 
@@ -55,14 +55,14 @@ namespace EnglishVocabularyMemorization.Services
             return BaseResult<List<Word>>.CreateValidResult(wordsDb);
         }
 
-        public async Task<BaseResult<bool>> SaveSentence(string sentence, string answer, string wordId)
+        public async Task<BaseResult<bool>> SaveSentence(string sentence, string answer, string originalSentence, string wordId)
         {
             var word = await _applicationService.Words.Where(x => x.WordUpId == wordId).FirstOrDefaultAsync();
             var dbSentence = await _applicationService.Sentences.Where(x => x.Text == sentence).FirstOrDefaultAsync();
 
             if (dbSentence == null)
             {
-                dbSentence = new Sentence { Id = Guid.NewGuid(), Text = sentence, LastAnswers = new List<string> { answer }, WordId = word.Id };
+                dbSentence = new Sentence { Id = Guid.NewGuid(), Text = sentence, OriginalSentence = originalSentence, LastAnswers = new List<string> { answer }, WordId = word.Id };
                 await _applicationService.Sentences.AddAsync(dbSentence);
             }
             else
@@ -73,9 +73,58 @@ namespace EnglishVocabularyMemorization.Services
             }
 
             await _applicationService.SaveChangesAsync();
-            
+
             return BaseResult<bool>.CreateValidResult(true);
 
+        }
+
+        public async Task<BaseResult<Exam>> GenerateExam(string email)
+        {
+            var exam = await _applicationService
+                .Exams
+                .Include(x => x.Sentences)
+                .ThenInclude(x => x.Word)
+                .Where(x => x.Email == email && x.IsFinished == false).FirstOrDefaultAsync();
+
+            if (exam != null)
+                return BaseResult<Exam>.CreateValidResult(exam);
+
+            var sentences = await _applicationService.Sentences
+                .Include(x => x.Word)
+                .ThenInclude(x => x.User)
+                .Where(x => x.Word.User.Email == email)
+                .Where(x => x.Word.LastExam == DateTime.MinValue || EF.Functions.DateDiffDay(x.Word.LastExam, DateTime.Now)  >= 2).ToListAsync();
+
+
+            if(!sentences.Any())
+                return BaseResult<Exam>.CreateInvalidResult("Sem exames para criar");
+
+
+            var sentenceGroupped = sentences.GroupBy(x => x.WordId).Take(5);
+
+            var sentecesToReturn = sentenceGroupped.SelectMany(x => x.Select(s => s)).ToList();
+
+            if (!sentences.Any())
+                return BaseResult<Exam>.CreateInvalidResult("Sem exames para criar");
+
+
+            var newExam = new Exam { Id = Guid.NewGuid(), Email = email, IsFinished = false, Sentences = sentences };
+
+            await _applicationService.Exams.AddAsync(newExam);
+            await _applicationService.SaveChangesAsync();
+
+            return BaseResult<Exam>.CreateValidResult(newExam);
+
+        }
+
+        public async Task<BaseResult<bool>> FinishExam(string id)
+        {
+            var exam = await _applicationService.Exams.Include(x => x.Sentences).ThenInclude(x => x.Word).Where(x => x.Id.ToString() == id).FirstOrDefaultAsync();
+            exam.LastExam = DateTime.Now;
+            exam.Sentences.ForEach(x => x.Word.LastExam = DateTime.Now);
+            exam.IsFinished = true;
+            await _applicationService.SaveChangesAsync();
+            return BaseResult<bool>.CreateValidResult(true);
         }
 
         public async Task<BaseResult<Word>> OpenWord(string wordId, string email)

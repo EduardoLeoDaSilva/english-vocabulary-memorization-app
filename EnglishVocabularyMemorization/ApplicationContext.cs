@@ -10,6 +10,7 @@ namespace EnglishVocabularyMemorization
         public DbSet<Word> Words { get; set; }
         public DbSet<Sentence> Sentences { get; set; }
         public DbSet<Config> Configs { get; set; }
+        public DbSet<Exam> Exams { get; set; }
 
         public ApplicationContext(DbContextOptions options) : base(options)
         {
