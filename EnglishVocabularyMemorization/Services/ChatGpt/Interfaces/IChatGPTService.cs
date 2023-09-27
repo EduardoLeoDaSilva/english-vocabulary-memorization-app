@@ -16,6 +16,8 @@ namespace EnglishVocabularyMemorization.Services.ChatGpt.Interfaces
         Task<BaseResult<ChatCompletionResponse>> GenerateSentences(string word);
 
         Task<BaseResult<ChatCompletionResponse>> CheckAnswers(string sentence, string answer);
+
+        Task<BaseResult<ChatCompletionResponse>> GenerateDefinition(string word);
         /// <summary>
         /// Transcreve o áudio para o idioma de entrada.
         /// </summary>

@@ -94,6 +94,38 @@ namespace EnglishVocabularyMemorization.Services.ChatGpt.Services
             }
         }
 
+        public async Task<BaseResult<ChatCompletionResponse>> GenerateDefinition(string word)
+        {
+            var request = new ChatCompletionRequest();
+            request.Model = "gpt-3.5-turbo";
+            request.Messages = new List<Models.Shared.Message>();
+            //var msg = $"context: The following is a fictional conversation between the USER and Dudi, an AI friend inside the Dudi app who is creative,helpful, and witty.:\n\nDudi: Hi there!,Let's get started. What's on your mind?\nUSER: Write 20 sentences to show the use of the following word: {word}. These sentences must be in portuguese. it is important that the word {word} is in portuguese in each sentence, the translation of the word, that's what I mean, so I can try to translate back to english, please don't make up unexistent meaning\n\n-----------------\n\nyour task: Return a JSON node in the format of" + "{ \"Sentences\": \"[]\", \"UsedMeanings\":\"[...]\"} where\n-Sentences: Short messages containing the word provided in portugues, the work must be surrounded with * *, that Dudi would say in response to the USER to keep the conversation going. Use language that is understandable by an ESL learner at UpperIntermediate level.\n-UsedMeanings: All the meaning used for the word " + word + ".";
+            var msg = $"(Answer in English(USA))\n\n Act as a search copilot, be helpful and informative.\n\n Query: Meanings and definitions of the word {word}";
+            request.Messages.Add(new Models.Shared.Message { Role = "system", Content = msg });
+            var content = new StringContent(JsonConvert.SerializeObject(request, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }), Encoding.UTF8, "application/json");
+            var response = await HttpClient.PostAsync(
+                $"{_baseUrl}/v1/chat/completions", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadAsStringAsync();
+                return BaseResult<ChatCompletionResponse>.CreateValidResult(data: JsonConvert.DeserializeObject<ChatCompletionResponse>(result));
+            }
+            else
+            {
+                var contentError = string.Empty;
+                using (var responseStream = await response.Content.ReadAsStreamAsync())
+                using (var streamReader = new StreamReader(responseStream))
+                {
+                    var jsonContentError = await streamReader.ReadToEndAsync();
+                    var error = JsonConvert.DeserializeObject<RootError>(jsonContentError);
+                    contentError = error?.error?.message;
+                }
+
+                return BaseResult<ChatCompletionResponse>.CreateInvalidResult($"Error: {contentError}");
+            }
+        }
+
         public async Task<BaseResult<ChatCompletionResponse>> CheckAnswers(string sentence, string answer)
         {
             var request = new ChatCompletionRequest();

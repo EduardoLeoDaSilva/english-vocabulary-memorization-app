@@ -14,5 +14,7 @@ namespace EnglishVocabularyMemorization.Services
         Task<BaseResult<List<Sentence>>> GetSavedSentences(string email, string word);
         Task<BaseResult<Exam>> GenerateExam(string email);
         Task<BaseResult<bool>> FinishExam(string id);
+
+        Task<BaseResult<bool>> AddWord(string word, string email, string definition, User user);
     }
 }

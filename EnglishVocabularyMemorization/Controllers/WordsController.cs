@@ -16,11 +16,13 @@ namespace EnglishVocabularyMemorization.Controllers
         private readonly ISpacedRepetitionService _spacedRepetitionService;
         private readonly IWordupService _wordupService;
         private readonly IChatGPTService _chatGptService;
-        public WordsController(IWordupService wordupService, ISpacedRepetitionService spacedRepetitionService, IChatGPTService chatGptService)
+        private readonly IUserService _userService;
+        public WordsController(IWordupService wordupService, ISpacedRepetitionService spacedRepetitionService, IChatGPTService chatGptService, IUserService userService)
         {
             _wordupService = wordupService;
             _spacedRepetitionService = spacedRepetitionService;
             _chatGptService = chatGptService;
+            _userService = userService;
         }
 
         [HttpGet("toreview")]
@@ -50,6 +52,25 @@ namespace EnglishVocabularyMemorization.Controllers
             var result = await _spacedRepetitionService.OpenWord(wordId, email);
 
             return Ok(result);
+        }
+
+        [HttpPost("add")]
+        public async Task<IActionResult> AddWord([FromBody] NewWord newWord)
+        {
+            var user = await _userService.GetUser(newWord.Email);
+
+            foreach (var word in newWord.Words.Split(","))
+            {
+
+                var resultChatGpt = await _chatGptService.GenerateDefinition(word.Trim());
+
+                var content = resultChatGpt.Data.Choices.First().Message.Content;
+                var result = await _spacedRepetitionService.AddWord(word.Trim(), newWord.Email, content, user.Data);
+
+            }
+
+            return Ok(BaseResult<bool>.CreateValidResult(true));
+
         }
 
         [HttpGet("sentences/{word}")]
@@ -148,6 +169,12 @@ namespace EnglishVocabularyMemorization.Controllers
     {
         public string Sentence { get; set; }
         public string Answer { get; set; }
+    }
+
+    public class NewWord
+    {
+        public string Words { get; set; }
+        public string Email { get; set; }
     }
 
     public class SaveQuestion

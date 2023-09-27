@@ -41,6 +41,13 @@
             <div class="col-md-6">
                 <h1 class="text-center mb-4">Flash Cards</h1>
                 <p style="padding-top: 20px;"></p>
+
+                <div style="display: flex; flex-direction: column; gap: 1m; padding: 10px;">
+                    <input type="text" id="new-word-input" placeholder="Add new words to review"/>
+                    <button class="btn btn-primary" id="new-words-btn" onclick="addWord()">Add new word</button>
+                </div>
+
+
                 <button class="btn btn-primary" id="generateExamBtn" onclick="generateExam()">Generate exam</button>
                 <button class="btn btn-primary" id="finishExamBtn" onclick="finishExam()" disabled>Finish exam</button>
                 <div class="card" id="current-card">
@@ -125,6 +132,39 @@ recognition.onresult = (event) => {
         lista.append(novoItem);
     }
 
+    function addWord() {
+        var inputWordValue = $("#new-word-input").val();
+
+        $.ajax({
+            url: `https://localhost:7135/api/words/add`,
+            method: "POST",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            data: JSON.stringify({
+                words: inputWordValue,
+                email: 'eduardoleodasilva@gmail.com',
+            }),
+            success: function (result) {
+                if (result.isSuccess) {
+                    jSuites.notification({
+                        name: 'Jsuites toast notification',
+                        message: 'Successfully Update',
+                    })
+                }
+                $("#new-word-input").val("");
+            },
+            error: function (xhr, status, error) {
+                console.error("Erro na requisição AJAX:", status, error);
+                jSuites.notification({
+                    error: 1,
+                    name: 'Error message',
+                    message: 'Something went wrong',
+                })
+            }
+        });
+
+    }
+
     function adicionarInformacaoRevisao(palavra, dias, wordId) {
         var lista = $("#in-repetition");
         var novoItem = $("<button>").addClass("list-group-item list-group-item-action d-flex justify-content-between align-items-center")
@@ -159,7 +199,7 @@ recognition.onresult = (event) => {
         }
 
         $.ajax({
-            url: `https://test-english-app.up.railway.app/api/words/next/${word.wordUpId}?` + "email=eduardoleodasilva@gmail.com",
+            url: `https://localhost:7135/api/words/next/${word.wordUpId}?` + "email=eduardoleodasilva@gmail.com",
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -277,7 +317,7 @@ recognition.onresult = (event) => {
         var wordID = localStorage.getItem("currentWord");
 
         $.ajax({
-            url: `https://test-english-app.up.railway.app/api/words/saveSentence?` +  `email=eduardoleodasilva@gmail.com&wordId=${wordID}`,
+            url: `https://localhost:7135/api/words/saveSentence?` +  `email=eduardoleodasilva@gmail.com&wordId=${wordID}`,
             method: "POST",
             contentType: "application/json; charset=utf-8",
             dataType: "json",
@@ -315,7 +355,7 @@ recognition.onresult = (event) => {
         var errorsList = $(`#list-errors-${question.id}`);
 
         $.ajax({
-            url: `https://test-english-app.up.railway.app/api/words/check`,
+            url: `https://localhost:7135/api/words/check`,
             method: "POST",
             contentType: "application/json; charset=utf-8",
             dataType: "json",
@@ -380,7 +420,7 @@ recognition.onresult = (event) => {
 
     function openWord(wordId) {
         $.ajax({
-            url: `https://test-english-app.up.railway.app/api/words/open/${wordId}?` + "email=eduardoleodasilva@gmail.com",
+            url: `https://localhost:7135/api/words/open/${wordId}?` + "email=eduardoleodasilva@gmail.com",
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -408,7 +448,7 @@ recognition.onresult = (event) => {
 
     function generateExam() {
         $.ajax({
-            url: `https://test-english-app.up.railway.app/api/words/generateExam` + "?email=eduardoleodasilva@gmail.com",
+            url: `https://localhost:7135/api/words/generateExam` + "?email=eduardoleodasilva@gmail.com",
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -440,7 +480,7 @@ recognition.onresult = (event) => {
     function finishExam() {
         var lasExamId = localStorage.getItem('lastExamId');
         $.ajax({
-            url: `https://test-english-app.up.railway.app/api/words/finishExam?id=${lasExamId}`,
+            url: `https://localhost:7135/api/words/finishExam?id=${lasExamId}`,
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -471,7 +511,7 @@ recognition.onresult = (event) => {
         $("#sentences").html("");
 
         $.ajax({
-            url: `https://test-english-app.up.railway.app/api/words/sentences/${word}?` + "email=eduardoleodasilva@gmail.com",
+            url: `https://localhost:7135/api/words/sentences/${word}?` + "email=eduardoleodasilva@gmail.com",
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -501,7 +541,7 @@ recognition.onresult = (event) => {
         $("#sentences").html("");
 
         $.ajax({
-            url: `https://test-english-app.up.railway.app/api/words/sentences/${word}?` + "email=eduardoleodasilva@gmail.com&ai=true",
+            url: `https://localhost:7135/api/words/sentences/${word}?` + "email=eduardoleodasilva@gmail.com&ai=true",
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -530,7 +570,7 @@ recognition.onresult = (event) => {
     function loadList() {
         // Requisição AJAX para obter os itens do backend e preencher a lista
         $.ajax({
-            url: "https://test-english-app.up.railway.app/api/words/toreview?" + "email=eduardoleodasilva@gmail.com",
+            url: "https://localhost:7135/api/words/toreview?" + "email=eduardoleodasilva@gmail.com",
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -557,7 +597,7 @@ recognition.onresult = (event) => {
 
         // Requisição AJAX para obter os itens do backend e preencher a lista
         $.ajax({
-            url: "https://test-english-app.up.railway.app/api/words/reviewing?" + "email=eduardoleodasilva@gmail.com",
+            url: "https://localhost:7135/api/words/reviewing?" + "email=eduardoleodasilva@gmail.com",
             method: "GET",
             dataType: "json",
             success: function (result) {

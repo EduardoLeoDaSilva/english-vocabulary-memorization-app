@@ -7,5 +7,6 @@ namespace EnglishVocabularyMemorization.Services
     {
         Task<BaseResult<List<Word>>> GetUserInfo(string email);
         Task<BaseResult<List<Word>>> SetUserPin(string pin);
+        Task<BaseResult<User>> GetUser(string email);
     }
 }

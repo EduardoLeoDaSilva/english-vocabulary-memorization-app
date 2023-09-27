@@ -37,6 +37,21 @@ namespace EnglishVocabularyMemorization.Services
 
         }
 
+        public async Task<BaseResult<bool>> AddWord(string word, string email, string definition, User user)
+        {
+            if (_applicationService.Words.Any(x => x.Name.ToLower() == word.ToLower()))
+            {
+                return BaseResult<bool>.CreateValidResult(true);
+            }
+
+            var wordID = "add" +  DateTime.Now.Ticks.ToString();
+
+            var wordsDb = await _applicationService.Words.AddAsync(new Word { Id = Guid.NewGuid(), WordUpId = wordID, Definition = definition, Name = word, User =user  });
+            await _applicationService.SaveChangesAsync();
+            return BaseResult<bool>.CreateValidResult(true);
+
+        }
+
         public async Task<BaseResult<List<Word>>> GetWordsInRepetitionProcess(string email)
         {
             var wordsDb = await _applicationService.Words.Include(x => x.User).Where(x => x.TimesReviewed > 0 && x.User.Email == email).OrderBy(x => x.LastTimeReviewed).ToListAsync();
@@ -130,7 +145,7 @@ namespace EnglishVocabularyMemorization.Services
         public async Task<BaseResult<Word>> OpenWord(string wordId, string email)
         {
             var wordFromWorduUpResult = await _wordupService.GetWords(new List<string> { wordId });
-            var wordFromWordup = wordFromWorduUpResult.Data.First();
+            var wordFromWordup = wordFromWorduUpResult.Data.FirstOrDefault();
             var wordDb = await _applicationService.Words.FirstOrDefaultAsync(x => x.WordUpId == wordId);
             var user = await _applicationService.Users.FirstOrDefaultAsync(x => x.Email == email);
             if (wordDb == null)
@@ -139,12 +154,17 @@ namespace EnglishVocabularyMemorization.Services
                 {
                     Id = Guid.NewGuid(),
                     User = user,
-                    Definition = wordFromWordup.Definition,
-                    Name = wordFromWordup.Name,
-                    WordUpId = wordFromWordup.WordUpId,
                     TimesReviewed = 0,
                     LastTimeReviewed = new DateTime()
                 };
+
+                if(wordFromWordup != null)
+                {
+                    wordDb.Definition = wordFromWordup.Definition;
+                    wordDb.Name = wordFromWordup.Name;
+                    wordDb.WordUpId = wordFromWordup.WordUpId;
+                }
+
 
                 _applicationService.Words.Add(wordDb);
 

@@ -52,5 +52,12 @@ namespace EnglishVocabularyMemorization.Services
 
         }
 
+        public async Task<BaseResult<User>> GetUser(string email)
+        {
+            var user = await _context.Users.Where(x => x.Email == email).FirstOrDefaultAsync();
+            return BaseResult<User>.CreateValidResult(user);
+
+        }
+
     }
 }
