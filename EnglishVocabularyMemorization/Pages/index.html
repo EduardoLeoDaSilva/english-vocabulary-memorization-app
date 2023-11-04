@@ -22,7 +22,7 @@
                     <h2 class="accordion-header">
                         <button class="accordion-button" type="button" data-bs-toggle="collapse"
                             data-bs-target="#collapseTwo" aria-expanded="true" aria-controls="collapseOne">
-                            Palavras para revisar
+                            Palavras para revisar <span class="badge bg-primary" id="quantRevisar"></span>
                         </button>
                     </h2>
                     <div id="collapseTwo" class="accordion-collapse collapse show" data-bs-parent="#accordionExample2">
@@ -36,7 +36,6 @@
                 </div>
             </div>
         </div>
-
         <!-- Coluna de Flash Cards -->
             <div class="col-md-6">
                 <h1 class="text-center mb-4">Flash Cards</h1>
@@ -72,7 +71,9 @@
                     <h2 class="accordion-header">
                         <button class="accordion-button" type="button" data-bs-toggle="collapse"
                             data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                            Palavras em revisão
+                            Palavras em revisão <span class="badge bg-primary" id="quantRevisao"></span>
+                            <span class="badge bg-success" id="quantRevisadasHj"></span>
+
                         </button>
                     </h2>
                     <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
@@ -136,7 +137,7 @@ recognition.onresult = (event) => {
         var inputWordValue = $("#new-word-input").val();
 
         $.ajax({
-            url: `https://localhost:7135/api/words/add`,
+            url: `http://localhost:3000/api/words/add`,
             method: "POST",
             contentType: "application/json; charset=utf-8",
             dataType: "json",
@@ -199,7 +200,7 @@ recognition.onresult = (event) => {
         }
 
         $.ajax({
-            url: `https://localhost:7135/api/words/next/${word.wordUpId}?` + "email=eduardoleodasilva@gmail.com",
+            url: `http://localhost:3000/api/words/next/${word.wordUpId}?` + "email=eduardoleodasilva@gmail.com",
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -317,7 +318,7 @@ recognition.onresult = (event) => {
         var wordID = localStorage.getItem("currentWord");
 
         $.ajax({
-            url: `https://localhost:7135/api/words/saveSentence?` +  `email=eduardoleodasilva@gmail.com&wordId=${wordID}`,
+            url: `http://localhost:3000/api/words/saveSentence?` +  `email=eduardoleodasilva@gmail.com&wordId=${wordID}`,
             method: "POST",
             contentType: "application/json; charset=utf-8",
             dataType: "json",
@@ -355,7 +356,7 @@ recognition.onresult = (event) => {
         var errorsList = $(`#list-errors-${question.id}`);
 
         $.ajax({
-            url: `https://localhost:7135/api/words/check`,
+            url: `http://localhost:3000/api/words/check`,
             method: "POST",
             contentType: "application/json; charset=utf-8",
             dataType: "json",
@@ -420,7 +421,7 @@ recognition.onresult = (event) => {
 
     function openWord(wordId) {
         $.ajax({
-            url: `https://localhost:7135/api/words/open/${wordId}?` + "email=eduardoleodasilva@gmail.com",
+            url: `http://localhost:3000/api/words/open/${wordId}?` + "email=eduardoleodasilva@gmail.com",
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -448,7 +449,7 @@ recognition.onresult = (event) => {
 
     function generateExam() {
         $.ajax({
-            url: `https://localhost:7135/api/words/generateExam` + "?email=eduardoleodasilva@gmail.com",
+            url: `http://localhost:3000/api/words/generateExam` + "?email=eduardoleodasilva@gmail.com",
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -480,7 +481,7 @@ recognition.onresult = (event) => {
     function finishExam() {
         var lasExamId = localStorage.getItem('lastExamId');
         $.ajax({
-            url: `https://localhost:7135/api/words/finishExam?id=${lasExamId}`,
+            url: `http://localhost:3000/api/words/finishExam?id=${lasExamId}`,
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -511,7 +512,7 @@ recognition.onresult = (event) => {
         $("#sentences").html("");
 
         $.ajax({
-            url: `https://localhost:7135/api/words/sentences/${word}?` + "email=eduardoleodasilva@gmail.com",
+            url: `http://localhost:3000/api/words/sentences/${word}?` + "email=eduardoleodasilva@gmail.com",
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -541,7 +542,7 @@ recognition.onresult = (event) => {
         $("#sentences").html("");
 
         $.ajax({
-            url: `https://localhost:7135/api/words/sentences/${word}?` + "email=eduardoleodasilva@gmail.com&ai=true",
+            url: `http://localhost:3000/api/words/sentences/${word}?` + "email=eduardoleodasilva@gmail.com&ai=true",
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -570,7 +571,7 @@ recognition.onresult = (event) => {
     function loadList() {
         // Requisição AJAX para obter os itens do backend e preencher a lista
         $.ajax({
-            url: "https://localhost:7135/api/words/toreview?" + "email=eduardoleodasilva@gmail.com",
+            url: "http://localhost:3000/api/words/toreview?" + "email=eduardoleodasilva@gmail.com",
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -580,6 +581,9 @@ recognition.onresult = (event) => {
                         message: 'Successfully Update',
                     })
                     localStorage.setItem("toreview", JSON.stringify(result.data))
+                    $("#quantRevisar").text(result.data.length);
+
+                    
                     result.data.forEach(function (item) {
                         adicionarLabel(item.name, item.wordUpId);
                     });
@@ -597,7 +601,7 @@ recognition.onresult = (event) => {
 
         // Requisição AJAX para obter os itens do backend e preencher a lista
         $.ajax({
-            url: "https://localhost:7135/api/words/reviewing?" + "email=eduardoleodasilva@gmail.com",
+            url: "http://localhost:3000/api/words/reviewing?" + "email=eduardoleodasilva@gmail.com",
             method: "GET",
             dataType: "json",
             success: function (result) {
@@ -606,6 +610,14 @@ recognition.onresult = (event) => {
                         name: 'Jsuites toast notification',
                         message: 'Successfully Update',
                     })
+                    $("#quantRevisao").text(result.data.length);
+                    $("#quantRevisadasHj").text(result.data.filter(x => {
+                        let date = new Date(x.lastTimeReviewed)
+                        date.setDate(date.getDate() -x.timesReviewed)
+
+                        return new Date().getDate() == date.getDate()
+                    }).length);
+
                     localStorage.setItem("reviewing", JSON.stringify(result.data))
                     result.data.forEach(function (item) {
                         adicionarInformacaoRevisao(item.name, item.nextReview, item.wordUpId);
